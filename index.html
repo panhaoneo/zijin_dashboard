@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>zijin-dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:     #0d0d0d;
+      --fg:     #c8c8c8;
+      --dim:    #505050;
+      --green:  #4af626;
+      --red:    #ff4444;
+      --yellow: #f0c040;
+      --cyan:   #4ecdc4;
+      --gold:   #c9a84c;
+      --border: #1e1e1e;
+      --font:   'Courier New', Courier, monospace;
+    }
+    html, body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 13px; line-height: 1.6; }
+    #app { max-width: 1000px; margin: 0 auto; padding: 20px 16px 48px; }
+
+    /* header */
+    #header { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 22px; }
+    .h-title { color: var(--green); font-size: 15px; }
+    .h-meta  { color: var(--dim); font-size: 12px; margin-top: 2px; }
+    .h-meta b { color: var(--yellow); font-weight: normal; }
+
+    /* section */
+    .sec { margin-bottom: 28px; }
+    .sec-hd {
+      color: var(--dim); font-size: 11px; text-transform: uppercase;
+      letter-spacing: .12em; margin-bottom: 8px;
+    }
+    .sec-hd::before { content: '# '; color: var(--green); }
+
+    /* tables */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { color: var(--dim); font-weight: normal; font-size: 11px; text-align: left;
+         padding: 0 12px 4px 0; border-bottom: 1px solid var(--border); }
+    th.r, td.r { text-align: right; padding-right: 0; }
+    td { padding: 5px 12px 5px 0; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    tr:last-child td { border-bottom: none; }
+    td.name  { color: var(--fg); }
+    td.sym   { color: var(--dim); font-size: 11px; }
+    td.price { color: var(--fg); font-weight: bold; }
+    td.up    { color: var(--green); }
+    td.dn    { color: var(--red); }
+    td.neu   { color: var(--dim); }
+    td.note  { color: var(--dim); font-size: 11px; }
+    td.warn  { color: var(--yellow); }
+
+    /* squeeze alert */
+    #squeeze {
+      border: 1px solid var(--yellow); color: var(--yellow);
+      padding: 5px 12px; font-size: 12px; margin-bottom: 14px; display: none;
+    }
+
+    /* signals */
+    .sigs { display: flex; gap: 14px; flex-wrap: wrap; }
+    .sig  { border: 1px solid var(--border); padding: 8px 14px; flex: 1; min-width: 170px; }
+    .sig-lbl  { color: var(--dim); font-size: 11px; margin-bottom: 3px; }
+    .sig-val  { font-size: 14px; font-weight: bold; }
+    .sig-why  { color: var(--dim); font-size: 11px; margin-top: 2px; }
+
+    /* inventory bars */
+    .inv-row  { display: flex; align-items: center; gap: 10px; margin: 5px 0; font-size: 12px; }
+    .inv-lbl  { color: var(--dim); width: 90px; flex-shrink: 0; }
+    .inv-trk  { flex: 1; height: 5px; background: var(--border); }
+    .inv-fill { height: 100%; transition: width .8s ease; }
+    .inv-fill.reg { background: var(--cyan); }
+    .inv-fill.eli { background: #3a3a3a; }
+    .inv-val  { width: 130px; text-align: right; flex-shrink: 0; }
+
+    /* charts */
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .chart-hd   { color: var(--dim); font-size: 11px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; }
+
+    /* range buttons */
+    .range-btns { display: flex; gap: 6px; }
+    .rbtn {
+      font-family: var(--font); font-size: 10px; background: none;
+      border: 1px solid var(--border); color: var(--dim);
+      padding: 1px 7px; cursor: pointer;
+    }
+    .rbtn:hover { border-color: var(--dim); color: var(--fg); }
+    .rbtn.active { border-color: var(--green); color: var(--green); }
+
+    /* footer */
+    #footer { border-top: 1px solid var(--border); padding-top: 10px; color: var(--dim); font-size: 11px; margin-top: 4px; }
+
+    @media (max-width: 640px) {
+      .chart-grid { grid-template-columns: 1fr; }
+      .sigs { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <div id="header">
+    <div class="h-title">$ zijin-dashboard &nbsp;<span style="color:var(--dim)">// 601899.SH · 紫金矿业市场指标</span></div>
+    <div class="h-meta">updated: <b id="upd">loading...</b> &nbsp;|&nbsp; yahoo finance + cme group</div>
+  </div>
+
+  <div id="squeeze"></div>
+
+  <div class="sec">
+    <div class="sec-hd">equity</div>
+    <table><thead><tr>
+      <th>名称</th><th>代码</th><th>价格</th><th>涨跌</th><th>涨跌幅</th><th class="r">成交量</th>
+    </tr></thead><tbody id="tb-eq"></tbody></table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">precious metals</div>
+    <table><thead><tr>
+      <th>名称</th><th>代码</th><th>价格</th><th>涨跌</th><th>涨跌幅</th><th class="r">成交量</th><th class="r">备注</th>
+    </tr></thead><tbody id="tb-pm"></tbody></table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">copper market</div>
+    <table><thead><tr>
+      <th>名称</th><th>代码</th><th>价格</th><th>涨跌</th><th>涨跌幅</th><th class="r">成交量</th><th class="r">备注</th>
+    </tr></thead><tbody id="tb-cu"></tbody></table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">comex silver physical inventory</div>
+    <table><thead><tr>
+      <th>指标</th><th>说明</th><th class="r">数值 (Moz)</th><th class="r">状态</th>
+    </tr></thead><tbody id="tb-cs"></tbody></table>
+    <div style="margin-top:12px">
+      <div class="inv-row">
+        <span class="inv-lbl">registered</span>
+        <div class="inv-trk"><div class="inv-fill reg" id="b-reg" style="width:0%"></div></div>
+        <span class="inv-val" id="b-reg-v">—</span>
+      </div>
+      <div class="inv-row">
+        <span class="inv-lbl">eligible</span>
+        <div class="inv-trk"><div class="inv-fill eli" id="b-eli" style="width:0%"></div></div>
+        <span class="inv-val" id="b-eli-v">—</span>
+      </div>
+    </div>
+    <div style="margin-top:8px;color:var(--dim);font-size:11px" id="cs-note">—</div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">macro</div>
+    <table><thead><tr>
+      <th>名称</th><th>代码</th><th>价格</th><th>涨跌</th><th>涨跌幅</th><th class="r">备注</th>
+    </tr></thead><tbody id="tb-mc"></tbody></table>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">signals</div>
+    <div class="sigs">
+      <div class="sig"><div class="sig-lbl">gold signal</div><div class="sig-val" id="sg-g">—</div><div class="sig-why" id="sg-g-r">—</div></div>
+      <div class="sig"><div class="sig-lbl">copper signal</div><div class="sig-val" id="sg-c">—</div><div class="sig-why" id="sg-c-r">—</div></div>
+      <div class="sig"><div class="sig-lbl">macro signal</div><div class="sig-val" id="sg-m">—</div><div class="sig-why" id="sg-m-r">—</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd">history (normalized, base=100)</div>
+    <div class="chart-grid">
+
+      <div>
+        <div class="chart-hd">
+          <span>gold · silver · zijin-a</span>
+          <div class="range-btns" id="rb1">
+            <button class="rbtn" data-d="30">30d</button>
+            <button class="rbtn active" data-d="90">90d</button>
+            <button class="rbtn" data-d="0">all</button>
+          </div>
+        </div>
+        <canvas id="c1" height="160"></canvas>
+      </div>
+
+      <div>
+        <div class="chart-hd">
+          <span>copper · DXY · cs_registered</span>
+          <div class="range-btns" id="rb2">
+            <button class="rbtn" data-d="30">30d</button>
+            <button class="rbtn active" data-d="90">90d</button>
+            <button class="rbtn" data-d="0">all</button>
+          </div>
+        </div>
+        <canvas id="c2" height="160"></canvas>
+      </div>
+
+    </div>
+    <div style="margin-top:8px;color:var(--dim);font-size:11px" id="hist-meta">history.json: — 条记录</div>
+  </div>
+
+  <div id="footer">
+    data: yahoo finance · cme group &nbsp;|&nbsp;
+    auto-update: weekdays UTC 01:00 &nbsp;|&nbsp;
+    not investment advice
+  </div>
+</div>
+
+<script>
+// ─── utils ───────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const f  = (v, d=2) => v == null || isNaN(v) ? '—' : Number(v).toFixed(d);
+const fv = v => !v ? '—' : v >= 1e6 ? (v/1e6).toFixed(2)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : String(v);
+
+function chg(c, p) {
+  if (c == null) return '<td class="neu">—</td><td class="neu">—</td>';
+  const cls = c > 0 ? 'up' : c < 0 ? 'dn' : 'neu';
+  const arr = c > 0 ? '▲' : c < 0 ? '▼' : '';
+  return `<td class="${cls}">${arr} ${f(Math.abs(c))}</td><td class="${cls}">${arr} ${f(Math.abs(p))}%</td>`;
+}
+
+function addRow(id, html) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = html;
+  $(id).appendChild(tr);
+}
+
+function norm(arr) {
+  const b = arr[0] || 1;
+  return arr.map(v => +(v / b * 100).toFixed(2));
+}
+
+// ─── charts ──────────────────────────────────────────
+const CHART_OPTS = {
+  responsive: true, maintainAspectRatio: true, animation: false,
+  plugins: { legend: { labels: { color:'#444', font:{size:10}, boxWidth:10 } } },
+  scales: {
+    x: { ticks:{color:'#333',font:{size:9},maxTicksLimit:7}, grid:{color:'#161616'} },
+    y: { ticks:{color:'#333',font:{size:9}}, grid:{color:'#161616'} }
+  }
+};
+
+let charts = {};
+let historyData = [];
+
+function sliceHistory(days) {
+  if (!days || days >= historyData.length) return historyData;
+  return historyData.slice(-days);
+}
+
+function drawCharts(days) {
+  const rows   = sliceHistory(days);
+  const labels = rows.map(r => r.date.slice(5));  // MM-DD
+
+  const series1 = {
+    gold:    { color: '#c9a84c', label: 'gold' },
+    silver:  { color: '#999',    label: 'silver' },
+    zijin_a: { color: '#4ecdc4', label: 'zijin-a' },
+  };
+  const series2 = {
+    copper:       { color: '#b87333', label: 'copper' },
+    dxy:          { color: '#555',    label: 'DXY' },
+    cs_registered:{ color: '#4af626', label: 'cs_reg' },
+  };
+
+  function buildDatasets(smap) {
+    return Object.entries(smap).map(([key, cfg]) => ({
+      label: cfg.label,
+      data:  norm(rows.map(r => r[key] ?? null).filter(v => v !== null).length === rows.length
+               ? rows.map(r => r[key])
+               : rows.map(r => r[key] ?? null)),
+      borderColor: cfg.color,
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.3,
+      fill: false,
+      spanGaps: true,
+    }));
+  }
+
+  ['c1','c2'].forEach(id => { if (charts[id]) { charts[id].destroy(); delete charts[id]; } });
+
+  charts['c1'] = new Chart($('c1').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: buildDatasets(series1) },
+    options: CHART_OPTS,
+  });
+  charts['c2'] = new Chart($('c2').getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets: buildDatasets(series2) },
+    options: CHART_OPTS,
+  });
+}
+
+// range button wiring
+function wireRangeBtns(groupId, chartRedraw) {
+  const group = $(groupId);
+  group.addEventListener('click', e => {
+    const btn = e.target.closest('.rbtn');
+    if (!btn) return;
+    group.querySelectorAll('.rbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    chartRedraw(parseInt(btn.dataset.d));
+  });
+}
+
+// ─── render ──────────────────────────────────────────
+function renderSnapshot(d) {
+  $('upd').textContent = d.updated_at || '—';
+
+  // equity
+  const za = d.zijin_a||{}, zh = d.zijin_h||{};
+  $('tb-eq').innerHTML = '';
+  addRow('tb-eq', `<td class="name">紫金矿业 A</td><td class="sym">601899.SH</td><td class="price">¥${f(za.price)}</td>${chg(za.change,za.change_pct)}<td class="r note">${fv(za.volume)}</td>`);
+  addRow('tb-eq', `<td class="name">紫金矿业 H</td><td class="sym">2899.HK</td><td class="price">HK$${f(zh.price)}</td>${chg(zh.change,zh.change_pct)}<td class="r note">${fv(zh.volume)}</td>`);
+
+  // precious metals
+  const gold=d.gold||{}, silver=d.silver||{}, gdx=d.gdx||{};
+  const gsR = gold.price && silver.price ? (gold.price/silver.price).toFixed(1) : '—';
+  $('tb-pm').innerHTML = '';
+  [
+    ['COMEX 黄金','GC=F', `$${f(gold.price)}`,  gold.change,   gold.change_pct,   fv(gold.volume),   ''],
+    ['COMEX 白银','SI=F', `$${f(silver.price)}`, silver.change, silver.change_pct, fv(silver.volume), ''],
+    ['GDX 矿商ETF','GDX', `$${f(gdx.price)}`,   gdx.change,    gdx.change_pct,    '—',               '情绪参考'],
+    ['金银比','—',         gsR,                  null,          null,              '—',               '>90 白银相对低估'],
+  ].forEach(([n,s,p,c,pc,v,nt]) =>
+    addRow('tb-pm', `<td class="name">${n}</td><td class="sym">${s}</td><td class="price">${p}</td>${c!=null?chg(c,pc):'<td class="neu">—</td><td class="neu">—</td>'}<td class="r note">${v}</td><td class="r note">${nt}</td>`)
+  );
+
+  // copper
+  const cu=d.copper||{}, bhp=d.bhp||{}, fcx=d.fcx||{};
+  const cgR = cu.price && gold.price ? (cu.price/gold.price*1000).toFixed(3) : '—';
+  $('tb-cu').innerHTML = '';
+  [
+    ['COMEX 铜','HG=F',    `$${f(cu.price)}/lb`,  cu.change,  cu.change_pct,  fv(cu.volume), ''],
+    ['铜/金比','—',          cgR,                  null,       null,           '—',           '↑风险偏好上升'],
+    ['BHP 必和必拓','BHP',   `$${f(bhp.price)}`,   bhp.change, bhp.change_pct, '—',           '矿业参考'],
+    ['FCX 自由港','FCX',     `$${f(fcx.price)}`,   fcx.change, fcx.change_pct, '—',           '铜矿龙头'],
+  ].forEach(([n,s,p,c,pc,v,nt]) =>
+    addRow('tb-cu', `<td class="name">${n}</td><td class="sym">${s}</td><td class="price">${p}</td>${c!=null?chg(c,pc):'<td class="neu">—</td><td class="neu">—</td>'}<td class="r note">${v}</td><td class="r note">${nt}</td>`)
+  );
+
+  // COMEX silver inventory
+  const cs = d.comex_silver || {};
+  $('tb-cs').innerHTML = '';
+  if (cs.registered != null) {
+    const total = (cs.registered||0) + (cs.eligible||0);
+    const rp = total > 0 ? cs.registered / total * 100 : 0;
+    const ep = 100 - rp;
+    const net = ((cs.received||0) - (cs.withdrawn||0)).toFixed(3);
+    const regSt = cs.registered < 40
+      ? `<span style="color:var(--red)">⚠ 极低</span>`
+      : cs.registered < 80 ? `<span style="color:var(--yellow)">偏低</span>` : `<span style="color:var(--green)">正常</span>`;
+    const flowSt = net >= 0
+      ? `<span style="color:var(--green)">净流入 +${net}</span>`
+      : `<span style="color:var(--red)">净流出 ${net}</span>`;
+    [
+      ['registered', '注册仓单（可交割）',   f(cs.registered,3), regSt],
+      ['eligible',   '合格库存（私人控制）', f(cs.eligible,3),   '—'],
+      ['received',   '当日入库',            `+${f(cs.received,3)}`, '补货入仓'],
+      ['withdrawn',  '当日出库',            `-${f(cs.withdrawn,3)}`,'实物离场'],
+      ['net',        '当日净流动',           net,                 flowSt],
+    ].forEach(([k,desc,val,st]) =>
+      addRow('tb-cs', `<td class="name">${k}</td><td class="note">${desc}</td><td class="price r">${val}</td><td class="r">${st}</td>`)
+    );
+    $('b-reg').style.width = rp.toFixed(1) + '%';
+    $('b-eli').style.width = ep.toFixed(1) + '%';
+    $('b-reg-v').textContent = `${cs.registered} Moz (${rp.toFixed(0)}%)`;
+    $('b-eli-v').textContent = `${cs.eligible} Moz (${ep.toFixed(0)}%)`;
+
+    const notes = [];
+    if (cs.registered < 40) notes.push('⚠ 注册库存极低，交割违约风险上升');
+    else if (cs.registered < 80) notes.push('注册库存偏低，持续关注');
+    if (rp < 20) notes.push(`注册仅占 ${rp.toFixed(0)}%，可交割比例不足`);
+    if (net < 0) notes.push('实物净流出，白银离开 COMEX 监控');
+    $('cs-note').textContent = '> ' + (notes.join('  |  ') || '库存状态正常');
+
+    if (cs.registered < 40 || rp < 20) {
+      $('squeeze').style.display = 'block';
+      $('squeeze').textContent = `[!] COMEX白银注册库存 ${cs.registered} Moz（占比 ${rp.toFixed(0)}%），实物挤兑压力上升`;
+    }
+  }
+
+  // macro
+  const dxy=d.dxy||{}, tnx=d.tnx||{}, spx=d.spx||{}, vix=d.vix||{};
+  $('tb-mc').innerHTML = '';
+  [
+    ['美元指数', 'DX-Y',  f(dxy.price),     dxy.change, dxy.change_pct, '↑美元 → ↓金铜'],
+    ['美债10Y',  '^TNX',  f(tnx.price)+'%', tnx.change, tnx.change_pct, '↑收益率 → ↓黄金'],
+    ['标普500',  '^GSPC', f(spx.price,0),   spx.change, spx.change_pct, '风险偏好参考'],
+    ['VIX',      '^VIX',  f(vix.price,1),   vix.change, vix.change_pct, vix.price>30?'⚠ 恐慌':vix.price>20?'谨慎':'稳定'],
+  ].forEach(([n,s,p,c,pc,nt]) =>
+    addRow('tb-mc', `<td class="name">${n}</td><td class="sym">${s}</td><td class="price">${p}</td>${chg(c,pc)}<td class="r note">${nt}</td>`)
+  );
+
+  // signals
+  function sig(score, reasons, vid, rid) {
+    if (score >= 2)       $(vid).innerHTML = '<span style="color:var(--green)">BULL ▲</span>';
+    else if (score <= -1) $(vid).innerHTML = '<span style="color:var(--red)">BEAR ▼</span>';
+    else                  $(vid).innerHTML = '<span style="color:var(--dim)">NEUTRAL —</span>';
+    $(rid).textContent = reasons.join(' · ') || 'no signal';
+  }
+  let gs=0,gr=[]; if((gold.change_pct||0)>0.5){gs++;gr.push('金价↑');} if((dxy.change_pct||0)<0){gs++;gr.push('美元↓');} if((vix.price||0)>20){gs++;gr.push('避险↑');} if((gold.change_pct||0)<-0.5){gs--;gr.push('金价↓');} sig(gs,gr,'sg-g','sg-g-r');
+  let cs2=0,cr=[]; if((cu.change_pct||0)>0.5){cs2++;cr.push('铜价↑');} if((dxy.change_pct||0)<0){cs2++;cr.push('美元↓');} if((spx.change_pct||0)>0){cs2++;cr.push('权益↑');} if((cu.change_pct||0)<-0.5){cs2--;cr.push('铜价↓');} sig(cs2,cr,'sg-c','sg-c-r');
+  let ms=0,mr=[]; if((dxy.change_pct||0)<-0.3){ms++;mr.push('美元弱');} if(vix.price&&vix.price<18){ms++;mr.push('VIX低');} if(vix.price&&vix.price>28){ms--;mr.push('VIX高');} if((spx.change_pct||0)>0.5){ms++;mr.push('SPX↑');} if((spx.change_pct||0)<-1){ms--;mr.push('SPX↓');} sig(ms,mr,'sg-m','sg-m-r');
+}
+
+// ─── load ─────────────────────────────────────────────
+async function loadAll() {
+  // 1. snapshot
+  let snap;
+  try {
+    const r = await fetch('./data.json?t=' + Date.now());
+    if (!r.ok) throw new Error();
+    snap = await r.json();
+  } catch {
+    snap = makeDemoSnap();
+  }
+  renderSnapshot(snap);
+
+  // 2. history
+  try {
+    const r = await fetch('./history.json?t=' + Date.now());
+    if (!r.ok) throw new Error();
+    historyData = await r.json();
+  } catch {
+    historyData = makeDemoHistory();
+  }
+
+  $('hist-meta').textContent =
+    `history.json: ${historyData.length} 条记录  |  ${historyData[0]?.date || '?'} → ${historyData[historyData.length-1]?.date || '?'}`;
+
+  // default 90d view
+  drawCharts(90);
+
+  // wire range buttons — both groups share same view state independently
+  wireRangeBtns('rb1', days => drawCharts(days));
+  wireRangeBtns('rb2', days => drawCharts(days));
+}
+
+// ─── demo fallback ────────────────────────────────────
+function makeDemoSnap() {
+  return {
+    updated_at: new Date().toLocaleString('zh-CN',{timeZone:'Asia/Shanghai'}) + ' (demo)',
+    zijin_a:{ price:39.63,  change:0.31,   change_pct:0.79,  volume:2897100 },
+    zijin_h:{ price:14.28,  change:0.12,   change_pct:0.85,  volume:15200000 },
+    gold:   { price:2918.4, change:12.4,   change_pct:0.43,  volume:182000 },
+    silver: { price:32.15,  change:-0.08,  change_pct:-0.25, volume:75000 },
+    gdx:    { price:42.3,   change:0.55,   change_pct:1.32 },
+    copper: { price:4.62,   change:0.03,   change_pct:0.71,  volume:45000 },
+    bhp:    { price:58.2,   change:0.8,    change_pct:1.39 },
+    fcx:    { price:44.6,   change:1.2,    change_pct:2.76 },
+    dxy:    { price:106.8,  change:-0.15,  change_pct:-0.14 },
+    tnx:    { price:4.32,   change:0.03,   change_pct:0.7 },
+    spx:    { price:5842,   change:28.4,   change_pct:0.49 },
+    vix:    { price:16.2,   change:-0.4,   change_pct:-2.4 },
+    comex_silver:{ registered:84.2, eligible:312.5, received:1.83, withdrawn:3.42 },
+  };
+}
+
+function makeDemoHistory() {
+  function gen(b,v,n){let x=b;return Array.from({length:n},()=>{x=x*(1+(Math.random()-.49)*v);return+x.toFixed(4);});}
+  const n=90, rows=[];
+  const d=new Date('2025-12-01');
+  const gH=gen(2650,.010,n),sH=gen(30,.013,n),cH=gen(4.2,.012,n),dH=gen(107,.004,n),
+        zaH=gen(36,.015,n),zhH=gen(13.5,.015,n),spH=gen(5700,.008,n),viH=gen(17,.04,n),
+        tnH=gen(4.3,.005,n),gdH=gen(40,.012,n),crH=gen(120,.02,n),ceH=gen(320,.015,n);
+  let i=0;
+  while(rows.length<n){
+    if(d.getDay()>0&&d.getDay()<6){
+      rows.push({date:d.toISOString().slice(0,10),gold:gH[i],silver:sH[i],copper:cH[i],dxy:dH[i],
+        zijin_a:zaH[i],zijin_h:zhH[i],spx:spH[i],vix:+viH[i].toFixed(2),tnx:+tnH[i].toFixed(3),
+        gdx:gdH[i],cs_registered:+crH[i].toFixed(3),cs_eligible:+ceH[i].toFixed(3),cs_withdrawn:+(Math.random()*4).toFixed(3)});
+      i++;
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return rows;
+}
+
+loadAll();
+</script>
+</body>
+</html>

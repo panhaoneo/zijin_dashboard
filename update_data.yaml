@@ -1,0 +1,40 @@
+```yaml
+name: 每日数据更新
+
+on:
+  schedule:
+    - cron: '0 1 * * 1-5'   # UTC 01:00 = 北京时间 09:00，周一至周五
+  workflow_dispatch:          # 支持手动触发
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: pip install yfinance pyyaml xlrd pytz
+
+      - name: 抓取数据
+        run: python fetch_data.py
+
+      - name: 重新生成 index.html
+        run: python build.py
+
+      - name: 提交更新
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git add data.json history.json index.html
+          git diff --staged --quiet || git commit -m "chore: daily update $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
+```
