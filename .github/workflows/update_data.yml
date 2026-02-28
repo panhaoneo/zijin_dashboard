@@ -21,13 +21,10 @@ jobs:
           python-version: '3.11'
 
       - name: 安装依赖
-        run: pip install yfinance pyyaml xlrd pytz
+        run: pip install yfinance openpyxl xlrd pytz
 
       - name: 抓取数据
         run: python fetch_data.py
-
-      - name: 重新生成 index.html
-        run: python build.py
 
       - name: 提交更新
         run: |
