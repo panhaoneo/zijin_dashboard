@@ -1,76 +1,76 @@
 {
   "zijin_a": {
-    "price": 32.48,
-    "change": 0.39,
-    "change_pct": 1.22,
-    "volume": 135591158
+    "price": 32.71,
+    "change": 0.24,
+    "change_pct": 0.74,
+    "volume": 152464505
   },
   "zijin_h": {
     "price": 34.1,
-    "change": 0.22,
-    "change_pct": 0.65,
-    "volume": 34689913
+    "change": 0.16,
+    "change_pct": 0.47,
+    "volume": 31844507
   },
   "gold": {
-    "price": 4427.7002,
-    "change": -122.0996,
-    "change_pct": -2.68,
-    "volume": 8028
+    "price": 4533.2002,
+    "change": 41.2002,
+    "change_pct": 0.92,
+    "volume": 37915
   },
   "silver": {
-    "price": 69.29,
-    "change": -3.071,
-    "change_pct": -4.24,
-    "volume": 5251
+    "price": 70.11,
+    "change": 0.565,
+    "change_pct": 0.81,
+    "volume": 7755
   },
   "gdx": {
-    "price": 82.39,
-    "change": -3.93,
-    "change_pct": -4.55,
-    "volume": 41100203
+    "price": 85.79,
+    "change": 3.4,
+    "change_pct": 4.13,
+    "volume": 35285300
   },
   "copper": {
-    "price": 5.53,
-    "change": 0.001,
-    "change_pct": 0.02,
-    "volume": 3032
+    "price": 5.507,
+    "change": 0.04,
+    "change_pct": 0.73,
+    "volume": 7343
   },
   "bhp": {
-    "price": 68.5,
-    "change": -1.51,
-    "change_pct": -2.16,
-    "volume": 2293237
+    "price": 69.5,
+    "change": 1.0,
+    "change_pct": 1.46,
+    "volume": 3011700
   },
   "fcx": {
-    "price": 55.83,
-    "change": -1.26,
-    "change_pct": -2.21,
-    "volume": 15410098
+    "price": 56.24,
+    "change": 0.41,
+    "change_pct": 0.73,
+    "volume": 12319500
   },
   "dxy": {
-    "price": 99.862,
-    "change": 0.262,
-    "change_pct": 0.26,
+    "price": 100.087,
+    "change": -0.063,
+    "change_pct": -0.06,
     "volume": null
   },
   "tnx": {
-    "price": 4.416,
-    "change": 0.088,
-    "change_pct": 2.03,
+    "price": 4.44,
+    "change": 0.024,
+    "change_pct": 0.54,
     "volume": null
   },
   "spx": {
-    "price": 6477.1602,
-    "change": -114.7397,
-    "change_pct": -1.74,
-    "volume": 3002944000
+    "price": 6368.8501,
+    "change": -108.3101,
+    "change_pct": -1.67,
+    "volume": 5303490000
   },
   "vix": {
-    "price": 27.44,
-    "change": 2.11,
-    "change_pct": 8.33,
+    "price": 31.05,
+    "change": 3.61,
+    "change_pct": 13.16,
     "volume": null
   },
   "comex_silver": null,
-  "updated_at": "2026-03-27 11:44 CST"
+  "updated_at": "2026-03-30 11:54 CST"
 }
