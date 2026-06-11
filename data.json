@@ -1,60 +1,60 @@
 {
   "zijin_a": {
-    "price": 27.58,
-    "change": -0.89,
-    "change_pct": -3.13,
-    "volume": 194217419
+    "price": 27.45,
+    "change": -0.25,
+    "change_pct": -0.9,
+    "volume": 222973223
   },
   "zijin_h": {
-    "price": 29.06,
-    "change": -1.58,
-    "change_pct": -5.16,
-    "volume": 54497634
+    "price": 28.88,
+    "change": -0.84,
+    "change_pct": -2.83,
+    "volume": 60107028
   },
   "gold": {
-    "price": 4197.7998,
-    "change": -62.2002,
-    "change_pct": -1.46,
-    "volume": 34800
+    "price": 4102.0,
+    "change": -6.2002,
+    "change_pct": -0.15,
+    "volume": 53512
   },
   "silver": {
-    "price": 63.59,
-    "change": -1.504,
-    "change_pct": -2.31,
-    "volume": 7804
+    "price": 63.97,
+    "change": -0.629,
+    "change_pct": -0.97,
+    "volume": 13349
   },
   "gdx": {
     "price": NaN,
     "change": NaN,
     "change_pct": NaN,
-    "volume": 24580035
+    "volume": 26189225
   },
   "copper": {
-    "price": 6.274,
-    "change": -0.0285,
-    "change_pct": -0.45,
-    "volume": 5009
+    "price": 6.2275,
+    "change": -0.0215,
+    "change_pct": -0.34,
+    "volume": 8481
   },
   "bhp": {
     "price": NaN,
     "change": NaN,
     "change_pct": NaN,
-    "volume": 5161460
+    "volume": 2390098
   },
   "fcx": {
     "price": NaN,
     "change": NaN,
     "change_pct": NaN,
-    "volume": 13249577
+    "volume": 11746703
   },
   "dxy": {
-    "price": 99.946,
+    "price": 99.929,
     "change": 0.0,
     "change_pct": 0.0,
     "volume": null
   },
   "tnx": {
-    "price": 4.552,
+    "price": 4.528,
     "change": 0.0,
     "change_pct": 0.0,
     "volume": null
@@ -63,14 +63,14 @@
     "price": NaN,
     "change": NaN,
     "change_pct": NaN,
-    "volume": 3499231000
+    "volume": 3253456000
   },
   "vix": {
-    "price": 18.92,
+    "price": 19.87,
     "change": 0.0,
     "change_pct": 0.0,
     "volume": null
   },
   "comex_silver": null,
-  "updated_at": "2026-06-10 13:09 CST"
+  "updated_at": "2026-06-11 13:19 CST"
 }
